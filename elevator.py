@@ -103,15 +103,3 @@ class Elevator(object):
 				pass
 			elif self.moving:
 				pass
-
-"""Debug"""
-
-e = Elevator(0, 10, 1, 1, True)
-e.press_floor_button(4)
-e.print_floor_buttons()
-e.move()
-e.move()
-e.move()
-print e.cur_floor
-e.open_door()
-e.print_floor_buttons()
