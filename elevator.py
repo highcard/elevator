@@ -19,13 +19,22 @@ class Elevator(object):
 		self.default_floor = default_floor
 		self.direction = direction
 		self.moving = False
-		self.floor_list = [False for floor in range(min_floor, max_floor)] #initialize all floors buttons to off
+		self.floor_list = [False for floor in range(min_floor, max_floor + 1)] #initialize all floors buttons to off
+
+	"""Debug functions"""
 
 	# prints object attributes
 	def print_stats(self):
 		attrs = vars(self)
 		print "===PRINTING STATS==="
 		print ', \n'.join("%s: %s" % item for item in attrs.items())
+
+	# prints floor button values
+	def print_floor_buttons(self):
+		for i in range(myElevator.min_floor, myElevator.max_floor + 1):
+			print "%s: %s" % (i, myElevator.check_button(i))
+
+	"""Elevator movements"""
 
 	# moves elevator in current direction
 	def move(self):
@@ -56,6 +65,8 @@ class Elevator(object):
 	def stop(self):
 		self.moving = False
 
+	"""Floor List Manipulations"""
+
 	# resets the floor list
 	def reset_floor_list(self):
 		for floor in self.floor_list:
@@ -74,11 +85,11 @@ class Elevator(object):
 		return self.floor_list[floor]
 
 
+"""Debug"""
+
 myElevator = Elevator(0, 10, 1, 1, True)
+myElevator.print_floor_buttons()
+for i in range(myElevator.min_floor, myElevator.max_floor + 1):
+	myElevator.press_floor_button(i)
 myElevator.print_stats()
-myElevator.press_floor_button(1)
-myElevator.print_stats()
-print myElevator.check_button(1)
-print myElevator.check_button(2)
-myElevator.remove_floor_button(1)
-print myElevator.check_button(1)
+myElevator.print_floor_buttons()
