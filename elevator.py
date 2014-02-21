@@ -40,14 +40,11 @@ class Elevator(object):
 		"""moves elevator in current direction"""
 		self.moving = True
 		up = self.direction
-		floor = self.cur_floor
-		ground = self.min_floor
-		roof = self.max_floor
-
-		if floor >= roof or floor <= ground:
+		if self.cur_floor >= self.max_floor or self.cur_floor <= self.min_floor:
 			self.moving = False
 			self.switch_direction()
-		self.cur_floor = self.cur_floor + (1 if up else -1)
+		elif self.cur_floor < self.max_floor or self.cur_floor > self.cur_floor:
+			self.cur_floor = self.cur_floor + (1 if up else -1)
 		
 	def switch_direction(self):
 		"""changes the direction of the elevator True = up / False = down"""
@@ -70,24 +67,30 @@ class Elevator(object):
 		self.stop()
 		self.floor_list[self.cur_floor] = False
 
-	"""Floor List Manipulations"""
+	"""Floor List Manipulations & Utility Functions"""
 
 	def reset_floor_list(self):
 		"""resets the floor list"""
-		for floor in self.floor_list:
-			floor = False
+		for i in range(self.min_floor, len(self.floor_list)):
+			self.floor_list[i] = False
 
 	def press_floor_button(self, floor):
 		"""adds a floor button request"""
-		self.floor_list[floor] = True
+		if button_in_range(floor):
+			self.floor_list[floor] = True
 
 	def remove_floor_button(self, floor):
 		"""removes a floor button request"""
-		self.floor_list[floor] = False
+		if button_in_range(floor):
+			self.floor_list[floor] = False
 
 	def check_button(self, floor):
 		"""check if button is pressed on current floor"""
-		return self.floor_list[floor]
+		if button_in_range(floor):
+			return self.floor_list[floor]
+
+	def button_in_range(self, floor):
+		return floor in range(self.min_floor, self.max_floor + 1)
 
 	def get_high_floor_request(self):
 		"""returns the highest floor requested"""
