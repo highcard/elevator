@@ -36,8 +36,8 @@ class Elevator(object):
 
 	"""Elevator movements"""
 
-	# moves elevator in current direction
 	def move(self):
+		"""moves elevator in current direction"""
 		self.moving = True
 		up = self.direction
 		floor = self.cur_floor
@@ -49,47 +49,51 @@ class Elevator(object):
 			self.switch_direction()
 		self.cur_floor = self.cur_floor + (1 if up else -1)
 		
-	# changes the direction of the elevator True = up / False = down
 	def switch_direction(self):
+		"""changes the direction of the elevator True = up / False = down"""
 		self.direction = not self.direction
 
-	# points the elevator up
 	def up(self):
+		"""# points the elevator up"""
 		self.direction = 1
 
-	# points the elevator down
 	def down(self):
+		"""# points the elevator down"""
 		self.direction = 0
 
-	# stops the elevator from moving
 	def stop(self):
+		"""# stops the elevator from moving"""
 		self.moving = False
 
 	"""Floor List Manipulations"""
 
-	# resets the floor list
 	def reset_floor_list(self):
+		"""resets the floor list"""
 		for floor in self.floor_list:
 			floor = False
 
-	# adds a floor button request
 	def press_floor_button(self, floor):
+		"""adds a floor button request"""
 		self.floor_list[floor] = True
 
-	# removes a floor button request
 	def remove_floor_button(self, floor):
+		"""removes a floor button request"""
 		self.floor_list[floor] = False
 
-	# check if button is pressed on current floor
 	def check_button(self, floor):
+		"""check if button is pressed on current floor"""
 		return self.floor_list[floor]
+
+	def get_high_floor_request(self):
+		"""returns the highest floor requested"""
+		if True in self.floor_list:
+			return self.max_floor - self.floor_list[::-1].index(True)
+		else:
+			return 'none'
 
 
 """Debug"""
 
 myElevator = Elevator(0, 10, 1, 1, True)
 myElevator.print_floor_buttons()
-for i in range(myElevator.min_floor, myElevator.max_floor + 1):
-	myElevator.press_floor_button(i)
-myElevator.print_stats()
-myElevator.print_floor_buttons()
+print myElevator.get_high_floor_request()
