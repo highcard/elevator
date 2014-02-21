@@ -26,13 +26,13 @@ class Elevator(object):
 	# prints object attributes
 	def print_stats(self):
 		attrs = vars(self)
-		print "===PRINTING STATS==="
+		print "===Elevator STATS==="
 		print ', \n'.join("%s: %s" % item for item in attrs.items())
 
 	# prints floor button values
 	def print_floor_buttons(self):
-		for i in range(myElevator.min_floor, myElevator.max_floor + 1):
-			print "%s: %s" % (i, myElevator.check_button(i))
+		for i in range(self.min_floor, self.max_floor + 1):
+			print "%s: %s" % (i, self.check_button(i))
 
 	"""Elevator movements"""
 
@@ -54,16 +54,21 @@ class Elevator(object):
 		self.direction = not self.direction
 
 	def up(self):
-		"""# points the elevator up"""
+		""" points the elevator up"""
 		self.direction = 1
 
 	def down(self):
-		"""# points the elevator down"""
+		""" points the elevator down"""
 		self.direction = 0
 
 	def stop(self):
-		"""# stops the elevator from moving"""
+		""" stops the elevator from moving"""
 		self.moving = False
+
+	def open_door(self):
+		"""stops elevator and opens door for passengers"""
+		self.stop()
+		self.floor_list[self.cur_floor] = False
 
 	"""Floor List Manipulations"""
 
@@ -91,9 +96,22 @@ class Elevator(object):
 		else:
 			return 'none'
 
+	def run(self):
+		"""elevator business logic loop"""
+		while(True):
+			if not self.moving:
+				pass
+			elif self.moving:
+				pass
 
 """Debug"""
 
-myElevator = Elevator(0, 10, 1, 1, True)
-myElevator.print_floor_buttons()
-print myElevator.get_high_floor_request()
+e = Elevator(0, 10, 1, 1, True)
+e.press_floor_button(4)
+e.print_floor_buttons()
+e.move()
+e.move()
+e.move()
+print e.cur_floor
+e.open_door()
+e.print_floor_buttons()
