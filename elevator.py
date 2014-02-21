@@ -23,14 +23,14 @@ class Elevator(object):
 
 	"""Debug functions"""
 
-	# prints object attributes
 	def print_stats(self):
+		"""prints object attributes"""
 		attrs = vars(self)
 		print "===Elevator STATS==="
 		print ', \n'.join("%s: %s" % item for item in attrs.items())
 
-	# prints floor button values
 	def print_floor_buttons(self):
+		"""prints floor button values"""
 		for i in range(self.min_floor, self.max_floor + 1):
 			print "%s: %s" % (i, self.check_button(i))
 
@@ -43,8 +43,9 @@ class Elevator(object):
 		if self.cur_floor >= self.max_floor or self.cur_floor <= self.min_floor:
 			self.moving = False
 			self.switch_direction()
-		elif self.cur_floor < self.max_floor or self.cur_floor > self.cur_floor:
+		elif self.cur_floor < self.max_floor or self.cur_floor > self.min_floor:
 			self.cur_floor = self.cur_floor + (1 if up else -1)
+			print "moved to floor %s" % self.cur_floor #debug
 		
 	def switch_direction(self):
 		"""changes the direction of the elevator True = up / False = down"""
@@ -76,34 +77,53 @@ class Elevator(object):
 
 	def press_floor_button(self, floor):
 		"""adds a floor button request"""
-		if button_in_range(floor):
+		if self.button_in_range(floor):
 			self.floor_list[floor] = True
 
 	def remove_floor_button(self, floor):
 		"""removes a floor button request"""
-		if button_in_range(floor):
+		if self.button_in_range(floor):
 			self.floor_list[floor] = False
 
 	def check_button(self, floor):
 		"""check if button is pressed on current floor"""
-		if button_in_range(floor):
+		if self.button_in_range(floor):
 			return self.floor_list[floor]
 
 	def button_in_range(self, floor):
 		"""check if floor is in the range"""
 		return floor in range(self.min_floor, self.max_floor + 1)
 
-	def get_high_floor_request(self):
+	def has_button_push(self):
+		return True in self.floor_list
+
+	def get_highest_call(self):
 		"""returns the highest floor requested"""
 		if True in self.floor_list:
 			return self.max_floor - self.floor_list[::-1].index(True)
 		else:
-			return 'none'
+			return None
+
+	"""action loops"""
 
 	def run(self):
 		"""elevator business logic loop"""
 		while(True):
-			if not self.moving:
-				pass
-			elif self.moving:
-				pass
+			if self.has_button_push():
+				self.move()
+				if self.check_button(self.cur_floor):
+					self.open_door()
+					self.print_floor_buttons() #debug
+					if not self.has_button_push():
+						self.switch_direction()
+
+			elif not self.has_button_push():
+				while(self.cur_floor != self.default_floor):
+					if self.cur_floor < self.default_floor and self.direction == False:
+						self.up()
+					elif self.cur_floor > self.default_floor and self.direction == True:
+						self.down()
+					self.move()
+
+
+
