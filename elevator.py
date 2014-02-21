@@ -52,11 +52,11 @@ class Elevator(object):
 
 	def up(self):
 		""" points the elevator up"""
-		self.direction = 1
+		self.direction = True
 
 	def down(self):
 		""" points the elevator down"""
-		self.direction = 0
+		self.direction = False
 
 	def stop(self):
 		""" stops the elevator from moving"""
