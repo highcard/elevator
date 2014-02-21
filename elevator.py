@@ -19,7 +19,7 @@ class Elevator(object):
 		self.max_floor = max_floor
 		self.direction = direction
 		self.moving = False
-		self.queue = []
+		self.floor_list = [(f for f in range(min_floor, max_floor), False)]
 
 	# prints object attributes
 	def print_stats(self):
@@ -56,16 +56,22 @@ class Elevator(object):
 	def stop(self):
 		self.moving = False
 
-	# resets the floor queue
+	# resets the floor list
 	def reset(self):
-		self.queue = []
+		self.floor_list = []
+
+	def press_floor_button(self, floor):
+
+
+
+
 
 class Controller(object):
 	def __init___(self):
 		self.min_floor = 0
 		self.max_floor = 10
 		self.default_floor = 0
-		self.default_direction = 1
+		self.default_direction = True
 		self.bank = []
 
 myElevator = Elevator(0, 10, 5, True)
