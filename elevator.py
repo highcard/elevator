@@ -90,6 +90,7 @@ class Elevator(object):
 			return self.floor_list[floor]
 
 	def button_in_range(self, floor):
+		"""check if floor is in the range"""
 		return floor in range(self.min_floor, self.max_floor + 1)
 
 	def get_high_floor_request(self):
