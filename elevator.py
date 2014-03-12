@@ -20,20 +20,7 @@ class Elevator(object):
 		self.direction = direction
 		self.moving = False
 		self.floor_list = [False for floor in range(min_floor, max_floor + 1)] #initialize all floors buttons to off
-
-	"""Debug functions"""
-
-	def print_stats(self):
-		"""prints object attributes"""
-		attrs = vars(self)
-		print "===Elevator STATS==="
-		print ', \n'.join("%s: %s" % item for item in attrs.items())
-
-	def print_floor_buttons(self):
-		"""prints floor button values"""
-		for i in range(self.min_floor, self.max_floor + 1):
-			print "%s: %s" % (i, self.check_button(i))
-
+		
 	"""Elevator movements"""
 
 	def move(self):
