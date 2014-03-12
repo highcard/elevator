@@ -32,7 +32,7 @@ class ElevatorTest(object):
 			except ValueError:
 				print "Oops - something messed up. Try that again."
 		if cmd.startswith('move'):
-			return getattr(self.e, "move")
+			print getattr(self.e, "move")
 
 
 
@@ -40,3 +40,4 @@ m = Elevator(0, 10, 1, 1, True)
 test = ElevatorTest(m)
 test.print_stats()
 test.prompt_command()
+test.print_stats()

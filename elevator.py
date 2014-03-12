@@ -95,22 +95,4 @@ class Elevator(object):
 
 	def run(self):
 		"""elevator business logic loop"""
-		while(True):
-			if self.has_button_push():
-				self.move()
-				if self.check_button(self.cur_floor):
-					self.open_door()
-					self.print_floor_buttons() #debug
-					if not self.has_button_push():
-						self.switch_direction()
-
-			elif not self.has_button_push():
-				while(self.cur_floor != self.default_floor):
-					if self.cur_floor < self.default_floor and self.direction == False:
-						self.up()
-					elif self.cur_floor > self.default_floor and self.direction == True:
-						self.down()
-					self.move()
-
-
-
+		
