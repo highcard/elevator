@@ -19,6 +19,7 @@ class Elevator(object):
 		self.default_floor = default_floor
 		self.direction = direction
 		self.moving = False
+		self.idle = True
 		self.floor_list = [False for floor in range(min_floor, max_floor + 1)] #initialize all floors buttons to off
 		
 	"""Elevator movements"""
@@ -26,13 +27,13 @@ class Elevator(object):
 	def move(self):
 		"""moves elevator in current direction"""
 		self.moving = True
+		self.idle = False
 		up = self.direction
 		if self.cur_floor >= self.max_floor or self.cur_floor <= self.min_floor:
 			self.moving = False
-			self.switch_direction()
+			self.idle = True
 		elif self.cur_floor < self.max_floor or self.cur_floor > self.min_floor:
 			self.cur_floor = self.cur_floor + (1 if up else -1)
-			print "moved to floor %s" % self.cur_floor #debug
 		
 	def switch_direction(self):
 		"""changes the direction of the elevator True = up / False = down"""
@@ -91,8 +92,22 @@ class Elevator(object):
 		else:
 			return None
 
+	def check_idle(self):
+		"""sets the elevator's idle status"""
+		if not self.has_button_push() and self.cur_floor == self.default_floor:
+			self.idle = True
+		else:
+			self.idle = False
+		return self.idle
+
+	def print_stats(self):
+		"""prints object attributes"""
+		attrs = vars(self)
+		print "===Elevator STATS==="
+		print ', \n'.join("%s: %s" % item for item in attrs.items())
+
 	"""action loops"""
 
 	def run(self):
 		"""elevator business logic loop"""
-		
+		pass
