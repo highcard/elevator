@@ -1,7 +1,7 @@
 from types import *
 
 class Elevator(object):
-	def __init__(self, min_floor, max_floor, cur_floor, default_floor, direction):
+	def __init__(self, id_num, min_floor, max_floor, cur_floor, default_floor, direction):
 		## Type Assertions
 		assert type(min_floor) is IntType, "is not an integer: %r" % min_floor
 		assert type(max_floor) is IntType, 'is not an integer: %r' % max_floor
@@ -13,6 +13,7 @@ class Elevator(object):
 		assert cur_floor >= min_floor and cur_floor <= max_floor, 'cur_floor is out of range: %r' % cur_floor
 		
 		#Initialize class attributes
+		self.id_num = id_num
 		self.cur_floor = cur_floor
 		self.min_floor = min_floor
 		self.max_floor = max_floor
@@ -22,6 +23,8 @@ class Elevator(object):
 		self.idle = True
 		self.floor_list = [False for floor in range(min_floor, max_floor + 1)] #initialize all floors buttons to off
 		
+		self.commands = []
+
 	"""Elevator movements"""
 
 	def move(self):
@@ -65,20 +68,20 @@ class Elevator(object):
 
 	def press_floor_button(self, floor):
 		"""adds a floor button request"""
-		if self.button_in_range(floor):
+		if self.floor_in_range(floor):
 			self.floor_list[floor] = True
 
 	def remove_floor_button(self, floor):
 		"""removes a floor button request"""
-		if self.button_in_range(floor):
+		if self.floor_in_range(floor):
 			self.floor_list[floor] = False
 
 	def check_button(self, floor):
 		"""check if button is pressed on current floor"""
-		if self.button_in_range(floor):
+		if self.floor_in_range(floor):
 			return self.floor_list[floor]
 
-	def button_in_range(self, floor):
+	def floor_in_range(self, floor):
 		"""check if floor is in the range"""
 		return floor in range(self.min_floor, self.max_floor + 1)
 
@@ -108,6 +111,60 @@ class Elevator(object):
 
 	"""action loops"""
 
-	def run(self):
-		"""elevator business logic loop"""
-		pass
+	def goto_floor(self, target_floor):
+		"""sends elevator to a determined floor"""
+		if self.floor_in_range(target_floor): #range checking. gotta find a better way to do this...
+			if self.cur_floor == target_floor:
+				return None
+			elif self.cur_floor < target_floor:
+				self.up()
+				self.move()
+				self.goto_floor(target_floor)
+			elif self.cur_floor > target_floor:
+				self.down()
+				self.move()
+				self.goto_floor(target_floor)
+		elif not self.floor_in_range(target_floor): #error checking
+			return None
+
+
+class Building(object):
+	def __init__(self, min_floor, max_floor, lobby, num_elevators):
+		self.min_floor = min_floor
+		self.max_floor = max_floor
+		self.lobby = lobby
+		self.elevator_bank = [Elevator(i, self.min_floor, self.max_floor, self.lobby, self.lobby, True) for i in range(0, num_elevators)]
+		self.floors = [[] for i in range(min_floor, max_floor + 1)]
+		self.call_buttons_up = [False for i in range(min_floor, max_floor + 1)] #initialize call up buttons for each floor
+		self.call_buttons_down = [False for i in range(min_floor, max_floor + 1)] #initialize call down buttons for each floor
+	
+	def list_elevators(self):
+		for elevator in self.elevator_bank:
+			elevator.print_stats()
+
+	def add_passenger(self, start_floor, dest_floor):
+		p = Passenger(start_floor, dest_floor)
+		self.floors[start_floor].append(p)
+
+	def call_elevators(self):
+		for floor in self.floors:
+			for passenger in floor:
+				if passenger.start_floor < passenger.dest_floor:
+					self.call_buttons_up[passenger.start_floor] = True
+				elif passenger.start_floor > passenger.dest_floor:
+					self.call_buttons_down[passenger.start_floor] = True
+
+class Passenger(object):
+	def __init__(self, start_floor, dest_floor):
+		self.start_floor = start_floor
+		self.dest_floor = dest_floor
+
+b = Building(0, 10, 1, 5)
+print b.floors
+p_list = [[4, 8], [8, 2], [3, 9], [4, 2], [0, 8], [1, 8], [3,2]]
+for p in p_list:
+	b.add_passenger(p[0], p[1])
+print b.floors
+b.call_elevators()
+print "Up: " + str(b.call_buttons_up)
+print "Down: " + str(b.call_buttons_down)
