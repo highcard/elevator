@@ -1,1 +1,32 @@
->>> import elevator
+>>> from elevator import *
+
+>>> def make_test_building():
+... 	building = Building(0, 10, 1, 1)
+... 	return building
+
+>>> def make_test_elevator():
+... 	b = make_test_building()
+... 	return b.elevator_bank[0]
+
+Test the Constructor
+>>> e = make_test_elevator()
+>>> e.id_num
+0
+>>> e.cur_floor
+1
+>>> e.default_floor
+1
+>>> e.floor_list
+[]
+>>> e.passenger_list
+[]
+
+Test basic button handling
+>>> def test_button_handling():
+... 	e = make_test_elevator()
+... 	e.floor_list.append(1)
+... 	e.floor_list.append(5)
+... 	return e.get_highest_call()
+
+>>> test_button_handling()
+5

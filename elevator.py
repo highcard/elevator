@@ -1,10 +1,11 @@
 """
 Elevator.py elevator bank/passenger Simulator:
 Models an bank of elevators in a building that respond to passengers.
+WORK-IN-PROGRESS
 """
 
 ################ 
-# GLOBAL 
+# GLOBAL CONSTANTS
 ################ 
 
 IDLE_STATE = 'idle'
@@ -61,100 +62,83 @@ class Elevator(object):
 
 	def set_idle(self):
 		self.state = IDLE_STATE
+		self.reset_floor_list()
 
-	###refactored above here!!
+	"""Call list manipulations & handling"""
 
 	def check_button(self, floor):
 		"""check if button is pressed on current floor"""
-		if self.floor_in_range(floor):
-			return self.floor_list[floor]
-
-	def floor_in_range(self, floor):
-		"""check if floor is in the range"""
-		return floor in range(self.min_floor, self.max_floor + 1)
+		return floor in self.floor_list
 
 	def has_button_push(self):
-		return True in self.floor_list
+		if self.floor_list:
+			return True
+		elif not self.floor_list:
+			return False
 
 	def get_highest_call(self):
-		"""returns the highest floor requested"""
-		if True in self.floor_list:
-			return self.max_floor - self.floor_list[::-1].index(True)
-		else:
-			return None
+		"""returns the highest floor requested."""
+		return max(self.floor_list)
 
 	def check_idle(self):
 		"""sets the elevator's idle status"""
 		if not self.has_button_push() and self.cur_floor == self.default_floor:
-			self.idle = True
-		else:
-			self.idle = False
-		return self.idle
+			self.set_idle()
+		return self.state == IDLE_STATE
 
-	def print_stats(self):
-		"""prints object attributes"""
-		attrs = vars(self)
-		print "===Elevator STATS==="
-		print ', \n'.join("%s: %s" % item for item in attrs.items())
+	###Elevator refactored above here!!
 
-	"""action loops"""
+	"""Action Loops"""
 
 	def goto_floor(self, target_floor):
 		"""sends elevator to a determined floor"""
-		if self.floor_in_range(target_floor): #range checking. gotta find a better way to do this...
-			if self.cur_floor == target_floor:
-				return None
-			elif self.cur_floor < target_floor:
-				self.up()
-				self.move()
-				self.goto_floor(target_floor)
-			elif self.cur_floor > target_floor:
-				self.down()
-				self.move()
-				self.goto_floor(target_floor)
-		elif not self.floor_in_range(target_floor): #error checking
+		if self.cur_floor == target_floor:
 			return None
+		elif self.cur_floor < target_floor:
+			self.move_up()
+			self.goto_floor(target_floor)
+		elif self.cur_floor > target_floor:
+			self.move_down()
+			self.goto_floor(target_floor)
 
 ################ 
 # Building 
 ################ 
 
-
 class Building(object):
 	def __init__(self, min_floor, max_floor, lobby, num_elevators):
-		#Bounds Assertions
-		assert min_floor < max_floor, 'invalid min_floor and max_floor values. min: %r, max: %r' % (min_floor, max_floor)
 		#Initialize Class Variables
 		self.min_floor = min_floor
 		self.max_floor = max_floor
 		self.lobby = lobby
 		self.elevator_bank = [Elevator(self, i, self.lobby, self.lobby, IDLE_STATE) for i in range(0, num_elevators)]
-		self.floors = [[] for i in range(min_floor, max_floor + 1)]
-		self.call_buttons_up = [False for i in range(min_floor, max_floor + 1)] #initialize call up buttons for each floor
-		self.call_buttons_down = [False for i in range(min_floor, max_floor + 1)] #initialize call down buttons for each floor
-	
-	def list_elevators(self):
-		for elevator in self.elevator_bank:
-			elevator.print_stats()
+		self.floors = [Floor(i) for i in range(min_floor, max_floor + 1)]
 
 	def add_passenger(self, start_floor, dest_floor):
 		p = Passenger(start_floor, dest_floor)
 		self.floors[start_floor].append(p)
 
-	def call_elevators(self):
+	def call_all_floors(self):
 		for floor in self.floors:
-			for passenger in floor:
-				if passenger.start_floor < passenger.dest_floor:
-					self.call_buttons_up[passenger.start_floor] = True
-				elif passenger.start_floor > passenger.dest_floor:
-					self.call_buttons_down[passenger.start_floor] = True
+			floor.call_elevators()
 
 ################ 
-# Floors
+# Floor
 ################ 
 
+class Floor(object):
+	def __init__(self, floor_number):
+		self.floor_number = floor_number
+		self.call_button_up = False
+		self.call_button_down = False
+		self.waiting = []
 
-
+	def call_elevators(self):
+		for passenger in waiting:
+			if self.floor_number < passenger.dest_floor:
+				self.call_button_up = True
+			elif self.floor_number > passenger.dest_floor:
+				self.call_button_down = True
 
 ################ 
 # Passenger 
@@ -172,13 +156,7 @@ class Passenger(object):
 ################ 
 
 def main():
-	b = Building(0, 10, 1, 1)
-	e = b.elevator_bank[0]
-	e.print_stats()
-	e.move_down()
-	e.print_stats()
-	e.open_door()
-	e.print_stats()
+	return
 
 if __name__ == "__main__":
 	main()
