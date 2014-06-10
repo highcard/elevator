@@ -1,79 +1,68 @@
-from types import *
+"""
+Elevator.py elevator bank/passenger Simulator:
+Models an bank of elevators in a building that respond to passengers.
+"""
+
+################ 
+# GLOBAL 
+################ 
+
+IDLE_STATE = 'idle'
+UP_STATE = 'up'
+DOWN_STATE = 'down'
+MOVE_STATE = 'move'
+OPEN_STATE = 'open'
+
+################ 
+# Elevator 
+################ 
 
 class Elevator(object):
-	def __init__(self, id_num, min_floor, max_floor, cur_floor, default_floor, direction):
-		## Type Assertions
-		assert type(min_floor) is IntType, "is not an integer: %r" % min_floor
-		assert type(max_floor) is IntType, 'is not an integer: %r' % max_floor
-		assert type(cur_floor) is IntType, 'is not an integer: %r' % cur_floor
-		assert type(direction) is BooleanType, 'is not an boolean: %r' % direction
-
-		#Bounds Assertions
-		assert min_floor < max_floor, 'invalid min_floor and max_floor values. min: %r, max: %r' % (min_floor, max_floor)
-		assert cur_floor >= min_floor and cur_floor <= max_floor, 'cur_floor is out of range: %r' % cur_floor
-		
+	def __init__(self, parent, id_num, cur_floor, default_floor, state):
 		#Initialize class attributes
 		self.id_num = id_num
 		self.cur_floor = cur_floor
-		self.min_floor = min_floor
-		self.max_floor = max_floor
 		self.default_floor = default_floor
-		self.direction = direction
-		self.moving = False
-		self.idle = True
-		self.floor_list = [False for floor in range(min_floor, max_floor + 1)] #initialize all floors buttons to off
+		self.state = state
+		self.floor_list = [] #initialize empty list of floor requests
 		self.passenger_list = []
-
-	"""Elevator movements"""
-
-	def move(self):
-		"""moves elevator in current direction"""
-		self.moving = True
-		self.idle = False
-		up = self.direction
-		if self.cur_floor >= self.max_floor or self.cur_floor <= self.min_floor:
-			self.moving = False
-			self.idle = True
-		elif self.cur_floor < self.max_floor or self.cur_floor > self.min_floor:
-			self.cur_floor = self.cur_floor + (1 if up else -1)
-		
-	def switch_direction(self):
-		"""changes the direction of the elevator True = up / False = down"""
-		self.direction = not self.direction
-
-	def up(self):
-		""" points the elevator up"""
-		self.direction = True
-
-	def down(self):
-		""" points the elevator down"""
-		self.direction = False
-
-	def stop(self):
-		""" stops the elevator from moving"""
-		self.moving = False
-
-	def open_door(self):
-		"""stops elevator and opens door for passengers"""
-		self.stop()
-		self.floor_list[self.cur_floor] = False
 
 	"""Floor List Manipulations & Utility Functions"""
 
 	def reset_floor_list(self):
 		"""resets the floor list"""
-		for i in range(self.min_floor, len(self.floor_list)):
-			self.floor_list[i] = False
+		self.floor_list = [] #initialize empty list of floor requests
 
 	def press_floor_button(self, floor):
 		"""adds a floor button request"""
-		if self.floor_in_range(floor):
-			self.floor_list[floor] = True
+		self.floor_list.append(floor)
 
 	def remove_floor_button(self, floor):
 		"""removes a floor button request"""
-		if self.floor_in_range(floor):
-			self.floor_list[floor] = False
+		if floor in self.floor_list:
+			self.floor_list.remove(floor)
+
+	"""Elevator movements & state-changes"""
+
+	def move_up(self):
+		"""moves elevator in the down direction"""
+		self.state = UP_STATE
+		self.cur_floor += 1
+		
+	def move_down(self):
+		"""moves elevator in the down direction"""
+		self.state = DOWN_STATE
+		self.cur_floor -= 1
+
+	def open_door(self):
+		"""stops elevator and opens door for passengers"""
+		self.state = OPEN_STATE
+		self.remove_floor_button(self.cur_floor)
+
+	def set_idle(self):
+		self.state = IDLE_STATE
+
+	###refactored above here!!
 
 	def check_button(self, floor):
 		"""check if button is pressed on current floor"""
@@ -126,13 +115,20 @@ class Elevator(object):
 		elif not self.floor_in_range(target_floor): #error checking
 			return None
 
+################ 
+# Building 
+################ 
+
 
 class Building(object):
 	def __init__(self, min_floor, max_floor, lobby, num_elevators):
+		#Bounds Assertions
+		assert min_floor < max_floor, 'invalid min_floor and max_floor values. min: %r, max: %r' % (min_floor, max_floor)
+		#Initialize Class Variables
 		self.min_floor = min_floor
 		self.max_floor = max_floor
 		self.lobby = lobby
-		self.elevator_bank = [Elevator(i, self.min_floor, self.max_floor, self.lobby, self.lobby, True) for i in range(0, num_elevators)]
+		self.elevator_bank = [Elevator(self, i, self.lobby, self.lobby, IDLE_STATE) for i in range(0, num_elevators)]
 		self.floors = [[] for i in range(min_floor, max_floor + 1)]
 		self.call_buttons_up = [False for i in range(min_floor, max_floor + 1)] #initialize call up buttons for each floor
 		self.call_buttons_down = [False for i in range(min_floor, max_floor + 1)] #initialize call down buttons for each floor
@@ -153,6 +149,16 @@ class Building(object):
 				elif passenger.start_floor > passenger.dest_floor:
 					self.call_buttons_down[passenger.start_floor] = True
 
+################ 
+# Floors
+################ 
+
+
+
+
+################ 
+# Passenger 
+################ 
 
 class Passenger(object):
 	def __init__(self, start_floor, dest_floor):
@@ -160,10 +166,19 @@ class Passenger(object):
 		self.dest_floor = dest_floor
 
 
-b = Building(0, 10, 1, 5)
-p_list = [[4, 8], [8, 2], [3, 9], [4, 2], [0, 8], [1, 8], [3,2]]
-for p in p_list:
-	b.add_passenger(p[0], p[1])
-b.call_elevators()
-print "Up: " + str(b.call_buttons_up)
-print "Down: " + str(b.call_buttons_down)
+
+################ 
+# Main Function
+################ 
+
+def main():
+	b = Building(0, 10, 1, 1)
+	e = b.elevator_bank[0]
+	e.print_stats()
+	e.move_down()
+	e.print_stats()
+	e.open_door()
+	e.print_stats()
+
+if __name__ == "__main__":
+	main()
