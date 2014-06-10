@@ -22,8 +22,7 @@ class Elevator(object):
 		self.moving = False
 		self.idle = True
 		self.floor_list = [False for floor in range(min_floor, max_floor + 1)] #initialize all floors buttons to off
-		
-		self.commands = []
+		self.passenger_list = []
 
 	"""Elevator movements"""
 
@@ -154,17 +153,17 @@ class Building(object):
 				elif passenger.start_floor > passenger.dest_floor:
 					self.call_buttons_down[passenger.start_floor] = True
 
+
 class Passenger(object):
 	def __init__(self, start_floor, dest_floor):
 		self.start_floor = start_floor
 		self.dest_floor = dest_floor
 
+
 b = Building(0, 10, 1, 5)
-print b.floors
 p_list = [[4, 8], [8, 2], [3, 9], [4, 2], [0, 8], [1, 8], [3,2]]
 for p in p_list:
 	b.add_passenger(p[0], p[1])
-print b.floors
 b.call_elevators()
 print "Up: " + str(b.call_buttons_up)
 print "Down: " + str(b.call_buttons_down)
