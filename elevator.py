@@ -5,14 +5,14 @@ WORK-IN-PROGRESS
 """
 
 ################ 
-# GLOBAL CONSTANTS
+# GLOBAL ENUMERATIONS	- Yeah, I know that Enums is supported in 3.4, but this works in 2.7
 ################ 
 
-IDLE_STATE = 'idle'
-UP_STATE = 'up'
-DOWN_STATE = 'down'
-MOVE_STATE = 'move'
-OPEN_STATE = 'open'
+def enum(**enums):
+    return type('Enum', (), enums)
+State = enum(IDLE=1, DISPATCHED=2, RETURNING=3)
+Direction = enum(UP=1, DOWN=2)
+Doors =	enum(CLOSED=1, OPENED=2)
 
 ################ 
 # Elevator 
@@ -25,7 +25,9 @@ class Elevator(object):
 		self.cur_floor = cur_floor
 		self.default_floor = default_floor
 		self.state = state
+		self.direction = Direction.UP
 		self.floor_list = [] #initialize empty list of floor requests
+		self.doors = Doors.CLOSED
 		self.passenger_list = []
 
 	"""Floor List Manipulations & Utility Functions"""
@@ -47,22 +49,32 @@ class Elevator(object):
 
 	def move_up(self):
 		"""moves elevator in the down direction"""
-		self.state = UP_STATE
+		self.direction = Direction.UP
 		self.cur_floor += 1
 		
 	def move_down(self):
 		"""moves elevator in the down direction"""
-		self.state = DOWN_STATE
+		self.direction = Direction.DOWN
 		self.cur_floor -= 1
 
 	def open_door(self):
-		"""stops elevator and opens door for passengers"""
-		self.state = OPEN_STATE
+		"""Opens door for passengers"""
+		self.doors = Doors.OPENED
 		self.remove_floor_button(self.cur_floor)
 
+	def close_door(self):
+		"""Closes elevator door and continues moving"""
+		self.doors = Doors.CLOSED
+
 	def set_idle(self):
-		self.state = IDLE_STATE
+		self.state = State.IDLE
 		self.reset_floor_list()
+
+	def deliver(self):
+		self.state = State.RETURNING
+
+	def dispatch(self):
+		self.state = State.DISPATCHED
 
 	"""Call list manipulations & handling"""
 
@@ -84,22 +96,7 @@ class Elevator(object):
 		"""sets the elevator's idle status"""
 		if not self.has_button_push() and self.cur_floor == self.default_floor:
 			self.set_idle()
-		return self.state == IDLE_STATE
-
-	###Elevator refactored above here!!
-
-	"""Action Loops"""
-
-	def goto_floor(self, target_floor):
-		"""sends elevator to a determined floor"""
-		if self.cur_floor == target_floor:
-			return None
-		elif self.cur_floor < target_floor:
-			self.move_up()
-			self.goto_floor(target_floor)
-		elif self.cur_floor > target_floor:
-			self.move_down()
-			self.goto_floor(target_floor)
+		return self.state == State.IDLE
 
 ################ 
 # Building 
@@ -111,7 +108,7 @@ class Building(object):
 		self.min_floor = min_floor
 		self.max_floor = max_floor
 		self.lobby = lobby
-		self.elevator_bank = [Elevator(self, i, self.lobby, self.lobby, IDLE_STATE) for i in range(0, num_elevators)]
+		self.elevator_bank = [Elevator(self, i, self.lobby, self.lobby, State.IDLE) for i in range(0, num_elevators)]
 		self.floors = [Floor(i) for i in range(min_floor, max_floor + 1)]
 
 	def add_passenger(self, start_floor, dest_floor):
@@ -121,6 +118,22 @@ class Building(object):
 	def call_all_floors(self):
 		for floor in self.floors:
 			floor.call_elevators()
+
+	def elevator_command(self, elevator):
+		"""Elevator State Handling"""
+		if elevator.state == State.IDLE and elevator.cur_floor == self.lobby:
+			if elevator.has_button_push():
+				elevator.state = State.DISPATCHED
+			else:
+				elevator.state = State.IDLE
+		### error state - elevator should not be idle unless at lobby ###
+		elif elevator.state == State.IDLE and elevator.cur_floor != self.lobby:
+			elevator.state = State.RETURNING
+			elevator.reset_floor_list()
+
+	def run_elevators(self):
+		for elevator in self.elevator_bank:
+			execute_command(elevator)
 
 ################ 
 # Floor
@@ -148,8 +161,6 @@ class Passenger(object):
 	def __init__(self, start_floor, dest_floor):
 		self.start_floor = start_floor
 		self.dest_floor = dest_floor
-
-
 
 ################ 
 # Main Function
