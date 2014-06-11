@@ -1,0 +1,85 @@
+>>> from elevator import *
+
+Test the Building Constructor
+>>> b = Building(0, 10, 1, 6)
+>>> b.min_floor
+0
+>>> b.max_floor
+10
+>>> b.lobby
+1
+>>> len(b.elevator_bank)
+6
+>>> len(b.floors)
+11
+
+Test the Elevator Constructor
+>>> ele_0 = b.elevator_bank[0]
+>>> ele_1 = b.elevator_bank[1]
+>>> ele_2 = b.elevator_bank[2]
+>>> ele_3 = b.elevator_bank[3]
+>>> ele_4 = b.elevator_bank[4]
+
+Test the Elevator movements & state changes
+>>> ele_1.move_up()
+>>> ele_1.open_door()
+>>> ele_2.move_down()
+>>> for elevator in b.elevator_bank:
+... 	elevator.cur_floor
+1
+2
+0
+1
+1
+1
+>>> ele_0.state == State.IDLE
+True
+>>> ele_1.direction == Direction.UP
+True
+>>> ele_1.doors == Doors.OPENED
+True
+>>> ele_2.direction == Direction.DOWN
+True
+>>> ele_2.doors == Doors.CLOSED
+True
+
+Floor List Manipulations & Utility Functions
+
+Press Floor Button
+>>> for i in range(0, 10, 2):
+... 	ele_0.press_floor_button(i)
+... 	ele_1.press_floor_button(i)
+... 	ele_2.press_floor_button(i + 1 % 10)
+>>> ele_1.floor_list
+[0, 2, 4, 6, 8]
+>>> ele_2.floor_list
+[1, 3, 5, 7, 9]
+
+Remove Floor Button Number
+>>> ele_1.remove_floor_button(4)
+>>> ele_1.floor_list
+[0, 2, 6, 8]
+>>> ele_2.remove_floor_button(4)
+>>> ele_2.floor_list
+[1, 3, 5, 7, 9]
+
+Reset Floor Button List
+>>> ele_0.floor_list
+[0, 2, 4, 6, 8]
+>>> ele_0.reset_floor_list()
+>>> ele_0.floor_list
+[]
+
+Building Elevator Command Queue
+>>> ele_4.state
+1
+>>> b.elevator_command(ele_4)
+>>> ele_4.state
+1
+>>> ele_2.state
+1
+>>> ele_2.floor_list
+[1, 3, 5, 7, 9]
+>>> b.elevator_command(ele_2)
+>>> ele_2.state
+3
