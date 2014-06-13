@@ -38,7 +38,8 @@ class Elevator(object):
 
 	def press_floor_button(self, floor):
 		"""adds a floor button request"""
-		self.floor_list.append(floor)
+		if not floor in self.floor_list:
+			self.floor_list.append(floor)
 
 	def remove_floor_button(self, floor):
 		"""removes a floor button request"""
@@ -224,6 +225,7 @@ def main():
 	b = Building(0, 10, 1, 1)
 	for i in range(0, 10, 3):
 		b.elevator_bank[0].press_floor_button(i)
+	b.elevator_bank[0].press_floor_button(1)
 	b.elevator_bank[0].press_floor_button(1)
 	b.run()
 
