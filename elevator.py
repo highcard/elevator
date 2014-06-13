@@ -74,13 +74,6 @@ class Elevator(object):
 
 	"""RETURNING list manipulations & handling"""
 
-	def check_floor(self):
-		"""check if button is pressed on current floor"""
-		if self.cur_floor in self.floor_list:
-			return True
-		else:
-			return False
-
 	def has_call(self):
 		if self.floor_list:
 			return True
@@ -89,10 +82,11 @@ class Elevator(object):
 
 	def get_farthest_call(self):
 		"""returns the farthest floor requested in the direction of travel."""
-		if self.direction == Direction.UP:
-			return max(self.floor_list)
-		elif self.direction == Direction.DOWN:
-			return min(self.floor_list)
+		if self.has_call():
+			if self.direction == Direction.UP:
+				return max(self.floor_list)
+			elif self.direction == Direction.DOWN:
+				return min(self.floor_list)
 
 	"""State-based actions"""
 
@@ -103,7 +97,7 @@ class Elevator(object):
 
 	def returning_action(self):
 		"""action for returning state"""
-		if self.check_floor():
+		if self.cur_floor in self.floor_list:
 			self.open_door()
 		else:
 			self.move()
@@ -141,7 +135,8 @@ class Elevator(object):
 			elif self.get_farthest_call() <= self.cur_floor:
 				self.state = State.RESPONDING
 		elif self.has_call() and self.cur_floor == self.default_floor and self.state == State.RETURNING:
-			self.state = State.RESPONDING
+			if not self.cur_floor in self.floor_list:
+				self.state = State.RESPONDING
 		elif not self.has_call() and self.cur_floor == self.default_floor:
 			self.direction = Direction.UP
 			self.state = State.IDLE
@@ -229,6 +224,7 @@ def main():
 	b = Building(0, 10, 1, 1)
 	for i in range(0, 10, 3):
 		b.elevator_bank[0].press_floor_button(i)
+	b.elevator_bank[0].press_floor_button(1)
 	b.run()
 
 if __name__ == "__main__":
