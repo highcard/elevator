@@ -10,9 +10,9 @@ WORK-IN-PROGRESS
 
 def enum(**enums):
     return type('Enum', (), enums)
-State = enum(IDLE=1, DISPATCHED=2, RETURNING=3)
-Direction = enum(UP=1, DOWN=2)
-Doors =	enum(CLOSED=1, OPENED=2)
+State = enum(IDLE=0, RESPONDING=1, RETURNING=2)
+Direction = enum(DOWN=0, UP=1)
+Doors =	enum(CLOSED=0, OPENED=1)
 
 ################ 
 # Elevator 
@@ -57,6 +57,12 @@ class Elevator(object):
 		self.direction = Direction.DOWN
 		self.cur_floor -= 1
 
+	def move(self):
+		if self.direction == Direction.UP:
+			self.move_up()
+		elif self.direction == Direction.DOWN:
+			self.move_down()
+	
 	def open_door(self):
 		"""Opens door for passengers"""
 		self.doors = Doors.OPENED
@@ -66,37 +72,91 @@ class Elevator(object):
 		"""Closes elevator door and continues moving"""
 		self.doors = Doors.CLOSED
 
-	def set_idle(self):
-		self.state = State.IDLE
-		self.reset_floor_list()
+	"""RETURNING list manipulations & handling"""
 
-	def deliver(self):
-		self.state = State.RETURNING
-
-	def dispatch(self):
-		self.state = State.DISPATCHED
-
-	"""Call list manipulations & handling"""
-
-	def check_button(self, floor):
+	def check_floor(self):
 		"""check if button is pressed on current floor"""
-		return floor in self.floor_list
+		if self.cur_floor in self.floor_list:
+			return True
+		else:
+			return False
 
-	def has_button_push(self):
+	def has_call(self):
 		if self.floor_list:
 			return True
 		elif not self.floor_list:
 			return False
 
-	def get_highest_call(self):
-		"""returns the highest floor requested."""
-		return max(self.floor_list)
+	def get_farthest_call(self):
+		"""returns the farthest floor requested in the direction of travel."""
+		if self.direction == Direction.UP:
+			return max(self.floor_list)
+		elif self.direction == Direction.DOWN:
+			return min(self.floor_list)
 
-	def check_idle(self):
-		"""sets the elevator's idle status"""
-		if not self.has_button_push() and self.cur_floor == self.default_floor:
-			self.set_idle()
-		return self.state == State.IDLE
+	"""State-based actions"""
+
+	def idling_action(self):
+		"""action for idle state"""
+		if self.has_call():
+			self.state = State.RESPONDING
+
+	def returning_action(self):
+		"""action for returning state"""
+		if self.check_floor():
+			self.open_door()
+		else:
+			self.move()
+
+	def responding_action(self):
+		"""action for responding state"""
+		if self.get_farthest_call() == self.cur_floor:
+			self.open_door()
+		else:
+			self.move()
+
+	def execute_state(self):
+		"""execute next state-based action"""
+		if self.doors == Doors.OPENED:
+			self.doors = Doors.CLOSED
+		elif self.doors == Doors.CLOSED:
+			if self.state == State.IDLE:
+				self.idling_action()
+			elif self.state == State.RESPONDING:
+				self.responding_action()
+			elif self.state == State.RETURNING:
+				self.returning_action()
+
+	def set_state(self):
+		if self.has_call() and self.direction == Direction.UP and self.state != State.RETURNING:
+			if self.get_farthest_call() < self.cur_floor:
+				self.direction = Direction.DOWN
+				self.state = State.RETURNING
+			elif self.get_farthest_call() >= self.cur_floor:
+				self.state = State.RESPONDING
+		elif self.has_call() and self.direction == Direction.DOWN and self.state != State.RETURNING:
+			if self.get_farthest_call() > self.cur_floor:
+				self.direction = Direction.UP
+				self.state = State.RETURNING
+			elif self.get_farthest_call() <= self.cur_floor:
+				self.state = State.RESPONDING
+		elif self.has_call() and self.cur_floor == self.default_floor and self.state == State.RETURNING:
+			self.state = State.RESPONDING
+		elif not self.has_call() and self.cur_floor == self.default_floor:
+			self.direction = Direction.UP
+			self.state = State.IDLE
+		elif not self.has_call() and self.cur_floor > self.default_floor:
+			self.direction = Direction.DOWN
+			self.state = State.RETURNING
+		elif not self.has_call() and self.cur_floor < self.default_floor:
+			self.direction = Direction.UP
+			self.state = State.RETURNING
+
+	def run_elevator(self):
+		self.execute_state()
+		self.set_state()
+		print "Floor: %s; Doors: %s; State: %s; Buttons: %s" % (self.cur_floor, self.doors, self.state, self.floor_list) #debug for main function
+
 
 ################ 
 # Building 
@@ -119,21 +179,12 @@ class Building(object):
 		for floor in self.floors:
 			floor.call_elevators()
 
-	def elevator_command(self, elevator):
-		"""Elevator State Handling"""
-		if elevator.state == State.IDLE and elevator.cur_floor == self.lobby:
-			if elevator.has_button_push():
-				elevator.state = State.DISPATCHED
-			else:
-				elevator.state = State.IDLE
-		### error state - elevator should not be idle unless at lobby ###
-		elif elevator.state == State.IDLE and elevator.cur_floor != self.lobby:
-			elevator.state = State.RETURNING
-			elevator.reset_floor_list()
-
-	def run_elevators(self):
-		for elevator in self.elevator_bank:
-			execute_command(elevator)
+	def run(self):
+		while(True):
+			for e in self.elevator_bank:
+				e.run_elevator()
+			if e.state == State.IDLE:
+				break
 
 ################ 
 # Floor
@@ -167,7 +218,18 @@ class Passenger(object):
 ################ 
 
 def main():
-	return
+	print ""
+	print "Simulating Building Parameters:"
+	print "==============================="
+	print "Lowest Floor: 0"
+	print "Highest Floor: 10"
+	print "Lobby Floor: 1"
+	print "Number of Elevators: 1"
+	print "Buttons Pressed: 0, 3, 6, 9"
+	b = Building(0, 10, 1, 1)
+	for i in range(0, 10, 3):
+		b.elevator_bank[0].press_floor_button(i)
+	b.run()
 
 if __name__ == "__main__":
 	main()

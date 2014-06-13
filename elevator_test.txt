@@ -1,7 +1,7 @@
 >>> from elevator import *
 
 Test the Building Constructor
->>> b = Building(0, 10, 1, 6)
+>>> b = Building(0, 10, 1, 3)
 >>> b.min_floor
 0
 >>> b.max_floor
@@ -9,18 +9,17 @@ Test the Building Constructor
 >>> b.lobby
 1
 >>> len(b.elevator_bank)
-6
+3
 >>> len(b.floors)
 11
+>>> type(b.elevator_bank[0])
+<class 'elevator.Elevator'>
 
 Test the Elevator Constructor
+>>> b = Building(0, 10, 1, 3)
 >>> ele_0 = b.elevator_bank[0]
 >>> ele_1 = b.elevator_bank[1]
 >>> ele_2 = b.elevator_bank[2]
->>> ele_3 = b.elevator_bank[3]
->>> ele_4 = b.elevator_bank[4]
-
-Test the Elevator movements & state changes
 >>> ele_1.move_up()
 >>> ele_1.open_door()
 >>> ele_2.move_down()
@@ -29,23 +28,15 @@ Test the Elevator movements & state changes
 1
 2
 0
-1
-1
-1
->>> ele_0.state == State.IDLE
-True
->>> ele_1.direction == Direction.UP
-True
->>> ele_1.doors == Doors.OPENED
-True
->>> ele_2.direction == Direction.DOWN
-True
->>> ele_2.doors == Doors.CLOSED
-True
 
 Floor List Manipulations & Utility Functions
 
 Press Floor Button
+
+>>> b = Building(0, 10, 1, 3)
+>>> ele_0 = b.elevator_bank[0]
+>>> ele_1 = b.elevator_bank[1]
+>>> ele_2 = b.elevator_bank[2]
 >>> for i in range(0, 10, 2):
 ... 	ele_0.press_floor_button(i)
 ... 	ele_1.press_floor_button(i)
@@ -54,32 +45,99 @@ Press Floor Button
 [0, 2, 4, 6, 8]
 >>> ele_2.floor_list
 [1, 3, 5, 7, 9]
-
-Remove Floor Button Number
 >>> ele_1.remove_floor_button(4)
 >>> ele_1.floor_list
 [0, 2, 6, 8]
 >>> ele_2.remove_floor_button(4)
 >>> ele_2.floor_list
 [1, 3, 5, 7, 9]
-
-Reset Floor Button List
 >>> ele_0.floor_list
 [0, 2, 4, 6, 8]
 >>> ele_0.reset_floor_list()
 >>> ele_0.floor_list
 []
 
-Building Elevator Command Queue
->>> ele_4.state
-1
->>> b.elevator_command(ele_4)
->>> ele_4.state
-1
->>> ele_2.state
-1
->>> ele_2.floor_list
-[1, 3, 5, 7, 9]
->>> b.elevator_command(ele_2)
->>> ele_2.state
+Elevator state action loops/reactions
+
+>>> b = Building(0, 10, 1, 1)
+>>> ele_0 = b.elevator_bank[0]
+>>> for i in range(0, 10, 2):
+... 	ele_0.press_floor_button(i)
+>>> ele_0.get_farthest_call()
+8
+>>> ele_0.move_up()
+>>> ele_0.move_up()
+>>> ele_0.move_up()
+>>> ele_0.move_up()
+>>> ele_0.get_farthest_call()
+8
+>>> ele_0.move_down()
+>>> ele_0.get_farthest_call()
+0
+
+Elevator Set State unit
+
+>>> b = Building(0, 10, 1, 1)
+>>> ele_0 = b.elevator_bank[0]
+>>> for i in range(0, 10, 2):
+... 	ele_0.press_floor_button(i)
+>>> ele_0.state == State.IDLE
+True
+>>> ele_0.set_state()
+>>> ele_0.state == State.IDLE
+False
+>>> ele_0.state == State.RESPONDING
+True
+>>> ele_0.direction == Direction.UP
+True
+>>> ele_0.cur_floor = 9
+>>> ele_0.set_state()
+>>> ele_0.state == State.RETURNING
+True
+>>> ele_0.direction == Direction.DOWN
+True
+
+TEST THE BLOODY BUSINESS LOGIC
+>>> b = Building(0, 10, 1, 1)
+>>> ele_0 = b.elevator_bank[0]
+>>> ele_0.execute_state()
+>>> ele_0.state == State.IDLE
+True
+>>> ele_0.set_state()
+>>> ele_0.state == State.IDLE
+True
+>>> for i in range(0, 10, 2):
+... 	ele_0.press_floor_button(i)
+>>> ele_0.execute_state()
+>>> ele_0.state == State.RESPONDING
+True
+>>> ele_0.set_state()
+>>> ele_0.state == State.RESPONDING
+True
+>>> ele_0.execute_state()
+>>> ele_0.cur_floor
+2
+>>> ele_0.set_state()
+>>> ele_0.state == State.RESPONDING
+True
+>>> ele_0.execute_state()
+>>> ele_0.cur_floor
 3
+>>> ele_0.cur_floor = 8
+>>> ele_0.execute_state()
+>>> ele_0.cur_floor
+8
+>>> ele_0.floor_list
+[0, 2, 4, 6]
+>>> ele_0.state == State.RESPONDING
+True
+>>> ele_0.set_state()
+>>> ele_0.state == State.RETURNING
+True
+>>> ele_0.execute_state()
+>>> ele_0.cur_floor
+8
+>>> ele_0.close_door()
+>>> ele_0.execute_state()
+>>> ele_0.cur_floor
+7
