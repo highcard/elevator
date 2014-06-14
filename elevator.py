@@ -4,6 +4,9 @@ Models an bank of elevators in a building that respond to passengers.
 WORK-IN-PROGRESS
 """
 
+import time
+import os
+
 ################ 
 # GLOBAL ENUMERATIONS	- Yeah, I know that Enums is supported in 3.4, but this works in 2.7
 ################ 
@@ -19,43 +22,54 @@ Doors =	enum(CLOSED=0, OPENED=1)
 ################ 
 
 class Elevator(object):
-	def __init__(self, parent, id_num, cur_floor, default_floor, state):
+	def __init__(self, parent, id_num, cur_floor, default_floor):
 		#Initialize class attributes
 		self.id_num = id_num
 		self.cur_floor = cur_floor
 		self.default_floor = default_floor
-		self.state = state
+		self.state = State.IDLE
 		self.direction = Direction.UP
-		self.floor_list = [] #initialize empty list of floor requests
 		self.doors = Doors.CLOSED
+		self.up_queue = [] #initialize empty list of floor requests
+		self.down_queue = []
+		self.button_lights = []
 		self.passenger_list = []
 
 	"""Floor List Manipulations & Utility Functions"""
 
-	def reset_floor_list(self):
-		"""resets the floor list"""
-		self.floor_list = [] #initialize empty list of floor requests
+	def reset_floor_queues(self):
+		"""resets the floor queues"""
+		self.up_queue = [] #initialize empty list of floor requests
+		self.down_queue = [] #initialize empty list of floor requests
+		self.button_lights = [] #initialize empty list of floor requests
 
 	def press_floor_button(self, floor):
 		"""adds a floor button request"""
-		if not floor in self.floor_list:
-			self.floor_list.append(floor)
+		if floor == self.cur_floor:
+			if self.direction == Direction.UP and not floor in self.up_queue:
+				self.up_queue.append(floor)
+			elif self.direction == Direction.DOWN and not floor in self.down_queue:
+				self.down_queue.append(floor)
+		elif floor < self.cur_floor and not floor in self.down_queue:
+			self.down_queue.append(floor)
+		elif floor > self.cur_floor and not floor in self.up_queue:
+			self.up_queue.append(floor)
 
 	def remove_floor_button(self, floor):
 		"""removes a floor button request"""
-		if floor in self.floor_list:
-			self.floor_list.remove(floor)
+		if floor in self.up_queue:
+			self.up_queue.remove(floor)
+		if floor in self.down_queue:
+			self.down_queue.remove(floor)
 
 	"""Elevator movements & state-changes"""
 
 	def move_up(self):
 		"""moves elevator in the down direction"""
-		self.direction = Direction.UP
 		self.cur_floor += 1
 		
 	def move_down(self):
 		"""moves elevator in the down direction"""
-		self.direction = Direction.DOWN
 		self.cur_floor -= 1
 
 	def move(self):
@@ -67,7 +81,6 @@ class Elevator(object):
 	def open_door(self):
 		"""Opens door for passengers"""
 		self.doors = Doors.OPENED
-		self.remove_floor_button(self.cur_floor)
 
 	def close_door(self):
 		"""Closes elevator door and continues moving"""
@@ -76,39 +89,58 @@ class Elevator(object):
 	"""RETURNING list manipulations & handling"""
 
 	def has_call(self):
-		if self.floor_list:
+		if self.up_queue or self.down_queue:
 			return True
-		elif not self.floor_list:
+		else:
 			return False
 
 	def get_farthest_call(self):
 		"""returns the farthest floor requested in the direction of travel."""
 		if self.has_call():
-			if self.direction == Direction.UP:
-				return max(self.floor_list)
-			elif self.direction == Direction.DOWN:
-				return min(self.floor_list)
+			if self.direction == Direction.UP and self.up_queue:
+				return max(self.up_queue)
+			elif self.direction == Direction.DOWN and self.down_queue:
+				return min(self.down_queue)
 
-	"""State-based actions"""
+	"""STATE HANDLING"""
 
 	def idling_action(self):
 		"""action for idle state"""
 		if self.has_call():
 			self.state = State.RESPONDING
-
-	def returning_action(self):
-		"""action for returning state"""
-		if self.cur_floor in self.floor_list:
-			self.open_door()
-		else:
-			self.move()
+			self.responding_action()
 
 	def responding_action(self):
 		"""action for responding state"""
-		if self.get_farthest_call() == self.cur_floor:
-			self.open_door()
-		else:
-			self.move()
+		if self.has_call():
+			if self.direction == Direction.UP and self.cur_floor in self.up_queue:
+				self.open_door()
+				self.up_queue.remove(self.cur_floor)
+			elif self.direction == Direction.DOWN and self.cur_floor in self.down_queue:
+				self.open_door()
+				self.down_queue.remove(self.cur_floor)
+			else:
+				self.set_direction()
+				self.move()
+		elif not self.has_call():
+			self.state = State.RETURNING
+			self.returning_action()
+
+	def returning_action(self):
+		""" action for returning to lobby state"""
+		if self.has_call():
+			self.state = State.RESPONDING
+			self.responding_action()
+		elif not self.has_call():
+			if self.cur_floor > self.default_floor:
+				self.direction = Direction.DOWN
+				self.move()
+			elif self.cur_floor < self.default_floor:
+				self.direction = Direction.UP
+				self.move()
+			elif self.cur_floor == self.default_floor:
+				self.direction = Direction.UP #Sets default elevator direction to UP when idle
+				self.state = State.IDLE
 
 	def execute_state(self):
 		"""execute next state-based action"""
@@ -122,37 +154,12 @@ class Elevator(object):
 			elif self.state == State.RETURNING:
 				self.returning_action()
 
-	def set_state(self):
-		if self.has_call() and self.direction == Direction.UP and self.state != State.RETURNING:
-			if self.get_farthest_call() < self.cur_floor:
+	def set_direction(self):
+		if self.has_call():
+			if self.direction == Direction.UP and self.get_farthest_call() < self.cur_floor:
 				self.direction = Direction.DOWN
-				self.state = State.RETURNING
-			elif self.get_farthest_call() >= self.cur_floor:
-				self.state = State.RESPONDING
-		elif self.has_call() and self.direction == Direction.DOWN and self.state != State.RETURNING:
-			if self.get_farthest_call() > self.cur_floor:
+			elif self.direction == Direction.DOWN and self.get_farthest_call() > self.cur_floor:
 				self.direction = Direction.UP
-				self.state = State.RETURNING
-			elif self.get_farthest_call() <= self.cur_floor:
-				self.state = State.RESPONDING
-		elif self.has_call() and self.cur_floor == self.default_floor and self.state == State.RETURNING:
-			if not self.cur_floor in self.floor_list:
-				self.state = State.RESPONDING
-		elif not self.has_call() and self.cur_floor == self.default_floor:
-			self.direction = Direction.UP
-			self.state = State.IDLE
-		elif not self.has_call() and self.cur_floor > self.default_floor:
-			self.direction = Direction.DOWN
-			self.state = State.RETURNING
-		elif not self.has_call() and self.cur_floor < self.default_floor:
-			self.direction = Direction.UP
-			self.state = State.RETURNING
-
-	def run_elevator(self):
-		self.execute_state()
-		self.set_state()
-		print "Floor: %s; Doors: %s; State: %s; Buttons: %s" % (self.cur_floor, self.doors, self.state, self.floor_list) #debug for main function
-
 
 ################ 
 # Building 
@@ -164,7 +171,7 @@ class Building(object):
 		self.min_floor = min_floor
 		self.max_floor = max_floor
 		self.lobby = lobby
-		self.elevator_bank = [Elevator(self, i, self.lobby, self.lobby, State.IDLE) for i in range(0, num_elevators)]
+		self.elevator_bank = [Elevator(self, i, self.lobby, self.lobby) for i in range(0, num_elevators)]
 		self.floors = [Floor(i) for i in range(min_floor, max_floor + 1)]
 
 	def add_passenger(self, start_floor, dest_floor):
@@ -175,10 +182,19 @@ class Building(object):
 		for floor in self.floors:
 			floor.call_elevators()
 
+	def update_display(self):
+		os.system('cls')
+		for e in self.elevator_bank:
+			for attr, value in e.__dict__.iteritems():
+				print attr, value
+
 	def run(self):
 		while(True):
 			for e in self.elevator_bank:
-				e.run_elevator()
+				e.execute_state()
+				e.set_direction()
+			self.update_display()
+			time.sleep(1)
 			if e.state == State.IDLE:
 				break
 
@@ -191,10 +207,10 @@ class Floor(object):
 		self.floor_number = floor_number
 		self.call_button_up = False
 		self.call_button_down = False
-		self.waiting = []
+		self.passenger_list = []
 
 	def call_elevators(self):
-		for passenger in waiting:
+		for passenger in self.passenger_list:
 			if self.floor_number < passenger.dest_floor:
 				self.call_button_up = True
 			elif self.floor_number > passenger.dest_floor:
@@ -205,9 +221,10 @@ class Floor(object):
 ################ 
 
 class Passenger(object):
-	def __init__(self, start_floor, dest_floor):
-		self.start_floor = start_floor
+	def __init__(self, location, dest_floor):
+		self.location = location
 		self.dest_floor = dest_floor
+
 
 ################ 
 # Main Function
@@ -223,10 +240,12 @@ def main():
 	print "Number of Elevators: 1"
 	print "Buttons Pressed: 0, 3, 6, 9"
 	b = Building(0, 10, 1, 1)
-	for i in range(0, 10, 3):
+	for i in range(1, 10, 3):
 		b.elevator_bank[0].press_floor_button(i)
 	b.elevator_bank[0].press_floor_button(1)
 	b.elevator_bank[0].press_floor_button(1)
+	b.run()
+	b.elevator_bank[0].press_floor_button(0)
 	b.run()
 
 if __name__ == "__main__":

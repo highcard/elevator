@@ -1,0 +1,30 @@
+>>> from elevator import *
+>>> b = Building(0, 10, 1, 1)
+>>> ele_0 = b.elevator_bank[0]
+>>> ele_0.direction == Direction.UP
+True
+>>> for i in range(0, 10, 2):
+... 	ele_0.press_floor_button(i)
+>>> ele_0.direction == Direction.UP
+True
+>>> ele_0.get_farthest_call()
+8
+>>> ele_0.has_call()
+True
+>>> ele_0.up_queue
+[2, 4, 6, 8]
+>>> ele_0.down_queue
+[0]
+
+>>> ele_0.execute_state()
+>>> ele_0.state == State.RESPONDING
+True
+>>> ele_0.set_direction()
+>>> ele_0.direction == Direction.UP
+True
+
+Testing the direction updater
+>>> ele_1 = Elevator("b", "id=1", 3, 1)
+>>> ele_1.press_floor_button(0)
+>>> for i in range(0, 10, 2):
+... 	ele_0.press_floor_button(i)
