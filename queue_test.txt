@@ -28,3 +28,19 @@ Testing the direction updater
 >>> ele_1.press_floor_button(0)
 >>> for i in range(0, 10, 2):
 ... 	ele_0.press_floor_button(i)
+
+>>> ele_2 = Elevator("c", 2, 3, 1)
+>>> ele_2.has_call()
+False
+>>> ele_2.press_floor_button(1)
+>>> ele_2.press_floor_button(3)
+>>> ele_2.has_call()
+True
+>>> ele_2.up_queue
+[3]
+>>> ele_2.down_queue
+[1]
+>>> ele_2.remove_floor_button(1)
+>>> ele_2.remove_floor_button(3)
+>>> ele_2.has_call()
+False

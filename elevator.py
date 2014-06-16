@@ -72,6 +72,12 @@ class Elevator(object):
 		"""moves elevator in the down direction"""
 		self.cur_floor -= 1
 
+	def switch_direction(self):
+		if self.direction == Direction.UP:
+			self.direction == Direction.DOWN
+		elif self.direction == Direction.DOWN:
+			self.direction == Direction.UP
+
 	def move(self):
 		if self.direction == Direction.UP:
 			self.move_up()
@@ -99,7 +105,7 @@ class Elevator(object):
 		if self.has_call():
 			if self.direction == Direction.UP and self.up_queue:
 				return max(self.up_queue)
-			elif self.direction == Direction.DOWN and self.down_queue:
+			elif self.direction == Direction.UP and not self.up_queue:
 				return min(self.down_queue)
 
 	"""STATE HANDLING"""
@@ -107,6 +113,10 @@ class Elevator(object):
 	def idling_action(self):
 		"""action for idle state"""
 		if self.has_call():
+			if self.up_queue:
+				self.direction = Direction.UP
+			elif self.down_queue:
+				self.direction = Direction.DOWN
 			self.state = State.RESPONDING
 			self.responding_action()
 
@@ -139,7 +149,6 @@ class Elevator(object):
 				self.direction = Direction.UP
 				self.move()
 			elif self.cur_floor == self.default_floor:
-				self.direction = Direction.UP #Sets default elevator direction to UP when idle
 				self.state = State.IDLE
 
 	def execute_state(self):
@@ -156,10 +165,12 @@ class Elevator(object):
 
 	def set_direction(self):
 		if self.has_call():
-			if self.direction == Direction.UP and self.get_farthest_call() < self.cur_floor:
-				self.direction = Direction.DOWN
+			if self.get_farthest_call() == None:
+				self.switch_direction()
+			elif self.direction == Direction.UP and self.get_farthest_call() < self.cur_floor:
+				self.switch_direction()
 			elif self.direction == Direction.DOWN and self.get_farthest_call() > self.cur_floor:
-				self.direction = Direction.UP
+				self.switch_direction()
 
 ################ 
 # Building 
@@ -185,8 +196,16 @@ class Building(object):
 	def update_display(self):
 		os.system('cls')
 		for e in self.elevator_bank:
-			for attr, value in e.__dict__.iteritems():
-				print attr, value
+			print( "=========================================" )
+			print( "Elevator: {}".format(str(e.id_num)))
+			print( "=========================================" )
+			print( "Floor:         {}".format(str(e.cur_floor)))
+			print( "Doors:         {}".format(str(e.doors)))
+			print( "State:         {}".format(e.state))
+			print( "UP Queue:      {}".format(str(e.up_queue)))
+			print( "DOWN Queue:    {}".format(str(e.down_queue)))
+			print( "Direction:     {}".format(str(e.direction)))
+			print( "=========================================" )
 
 	def run(self):
 		while(True):
@@ -195,8 +214,6 @@ class Building(object):
 				e.set_direction()
 			self.update_display()
 			time.sleep(1)
-			if e.state == State.IDLE:
-				break
 
 ################ 
 # Floor
@@ -231,21 +248,16 @@ class Passenger(object):
 ################ 
 
 def main():
-	print ""
-	print "Simulating Building Parameters:"
-	print "==============================="
-	print "Lowest Floor: 0"
-	print "Highest Floor: 10"
-	print "Lobby Floor: 1"
-	print "Number of Elevators: 1"
-	print "Buttons Pressed: 0, 3, 6, 9"
-	b = Building(0, 10, 1, 1)
-	for i in range(1, 10, 3):
+	b = Building(0, 14, 1, 3)
+	for i in range(0, 10, 2):
 		b.elevator_bank[0].press_floor_button(i)
-	b.elevator_bank[0].press_floor_button(1)
-	b.elevator_bank[0].press_floor_button(1)
+	for i in range(4, 10, 2):
+		b.elevator_bank[1].press_floor_button(i)
+	b.elevator_bank[2].press_floor_button(0)
+	b.update_display()
+	time.sleep(2)
 	b.run()
-	b.elevator_bank[0].press_floor_button(0)
+	b.elevator_bank[1].press_floor_button(0)
 	b.run()
 
 if __name__ == "__main__":
