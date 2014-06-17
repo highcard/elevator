@@ -6,6 +6,7 @@ WORK-IN-PROGRESS
 
 import time
 import os
+import sys
 
 ################ 
 # GLOBAL ENUMERATIONS	- Yeah, I know that Enums is supported in 3.4, but this works in 2.7
@@ -188,35 +189,65 @@ class Building(object):
 		self.lobby = lobby
 		self.elevator_bank = [Elevator(self, i, self.lobby, self.lobby) for i in range(0, num_elevators)]
 		self.floors = [Floor(i) for i in range(min_floor, max_floor + 1)]
+		self.frame = 0
+		self.passenger_count = 0
+		self.roster = []
+
+	def next_frame(self):
+		"""Increments the next frame in the execution loop"""
+		self.frame += 1
+		print( "Frame #:  {}".format(str(self.frame)))
+
+	def is_frame(self, target_frame):
+		"""Checks the target_frame against the current frame and returns true on a match"""
+		if self.frame == target_frame:
+			return True
+		else:
+			return False
 
 	def add_passenger(self, start_floor, dest_floor):
-		p = Passenger(start_floor, dest_floor)
-		self.floors[start_floor].append(p)
+		p = Passenger(self.floors[start_floor], dest_floor, self.passenger_count)
+		self.floors[start_floor].waiting_room.append(p)
+		self.roster.append(p)
+		self.passenger_count += 1
 
-	def call_all_floors(self):
-		for floor in self.floors:
-			floor.call_elevators()
+	def step_elevatorbank(self):
+		for e in self.elevator_bank:
+			e.execute_state()
+			e.set_direction()
+
+	def step_passengers(self):
+		for p in self.roster:
+			p.check_location()
 
 	def update_display(self):
 		os.system('cls')
+		w = 60
 		for e in self.elevator_bank:
-			print( "=========================================" )
+			print( "=" * w )
 			print( "Elevator: {}".format(str(e.id_num)))
-			print( "=========================================" )
+			print( "=" * w )
 			print( "Floor:         {}".format(str(e.cur_floor)))
 			print( "Doors:         {}".format(str(e.doors)))
 			print( "State:         {}".format(e.state))
 			print( "UP Queue:      {}".format(str(e.up_queue)))
 			print( "DOWN Queue:    {}".format(str(e.down_queue)))
 			print( "Direction:     {}".format(str(e.direction)))
-			print( "=========================================" )
+			print( "=" * w )
+		print( "Floor  #     UP  DOWN       Passengers Waiting")
+		print( '-' * w)
+		for f in self.floors:
+			sys.stdout.write("fl.#   "+str(f.floor_number) + "  ")
+			sys.stdout.write("[{down}/{up}] ".format(down=f.call_button_down, up=f.call_button_up))
+			sys.stdout.write("waiting:" + "; ".join(["#"+str(p.sk) + " to "+str(p.dest_floor) for p in f.waiting_room]) +"\n")
+			sys.stdout.write("-" * w +"\n")
 
 	def run(self):
 		while(True):
-			for e in self.elevator_bank:
-				e.execute_state()
-				e.set_direction()
+			self.step_elevatorbank()
+			self.step_passengers()
 			self.update_display()
+			self.next_frame()
 			time.sleep(1)
 
 ################ 
@@ -228,40 +259,57 @@ class Floor(object):
 		self.floor_number = floor_number
 		self.call_button_up = False
 		self.call_button_down = False
-		self.passenger_list = []
-
-	def call_elevators(self):
-		for passenger in self.passenger_list:
-			if self.floor_number < passenger.dest_floor:
-				self.call_button_up = True
-			elif self.floor_number > passenger.dest_floor:
-				self.call_button_down = True
+		self.waiting_room = []
+		self.on_floor = []
 
 ################ 
 # Passenger 
 ################ 
 
 class Passenger(object):
-	def __init__(self, location, dest_floor):
+	def __init__(self, location, dest_floor, sk):
 		self.location = location
 		self.dest_floor = dest_floor
+		self.sk = sk
 
+	def check_location(self):
+		if type(self.location) is Elevator:
+			pass
+		elif type(self.location) is Floor:
+			if self.has_destination():
+				self.check_destination()
+
+	def has_destination(self):
+		if self.dest_floor is not None:
+			return True
+		elif self.dest_floor is None:
+			return False
+
+	def check_destination(self):
+		if self.location.floor_number == self.dest_floor:
+			self.dest_floor == None
+		elif self.location.floor_number < self.dest_floor:
+			self.location.call_button_up = True
+		elif self.location.floor_number > self.dest_floor:
+			self.location.call_button_down = True
 
 ################ 
 # Main Function
 ################ 
 
 def main():
-	b = Building(0, 14, 1, 3)
+	b = Building(0, 14, 1, 2)
 	for i in range(0, 14, 5):
 		b.elevator_bank[0].press_floor_button(i)
 	for i in range(4, 14, 3):
 		b.elevator_bank[1].press_floor_button(i)
-	b.elevator_bank[2].press_floor_button(0)
+	b.add_passenger(1, 0)
+	b.add_passenger(0, 10)
+	b.add_passenger(10, 0)
+	b.add_passenger(5, 8)
+	b.add_passenger(5, 3)
 	b.update_display()
-	time.sleep(2)
-	b.run()
-	b.elevator_bank[1].press_floor_button(0)
+	time.sleep(1)
 	b.run()
 
 if __name__ == "__main__":

@@ -1,0 +1,12 @@
+>>> from elevator import *
+>>> b = Building(0, 10, 1, 1)
+>>> floor_0 = b.floors[0]
+>>> ele_0 = b.elevator_bank[0]
+>>> b.add_passenger(1, 0)
+>>> b.add_passenger(0, 10)
+>>> b.add_passenger(10, 0)
+>>> b.add_passenger(5, 8)
+>>> b.add_passenger(5, 3)
+>>> for floor in b.floors: # doctest: +ELLIPSIS
+... 	["p#" + str(p.sk) for p in floor.waiting_room]
+['p#1']...['p#0']...['p#3', 'p#4']...['p#2']
