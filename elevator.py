@@ -13,9 +13,9 @@ import os
 
 def enum(**enums):
     return type('Enum', (), enums)
-State = enum(IDLE=0, RESPONDING=1, RETURNING=2)
-Direction = enum(DOWN=0, UP=1)
-Doors =	enum(CLOSED=0, OPENED=1)
+State = enum(IDLE="IDLE", RESPONDING="RESPONDING", RETURNING="RETURNING")
+Direction = enum(DOWN="DOWN", UP="UP")
+Doors =	enum(CLOSED="CLOSED", OPENED="OPEN")
 
 ################ 
 # Elevator 
@@ -74,9 +74,9 @@ class Elevator(object):
 
 	def switch_direction(self):
 		if self.direction == Direction.UP:
-			self.direction == Direction.DOWN
+			self.direction = Direction.DOWN
 		elif self.direction == Direction.DOWN:
-			self.direction == Direction.UP
+			self.direction = Direction.UP
 
 	def move(self):
 		if self.direction == Direction.UP:
@@ -107,6 +107,10 @@ class Elevator(object):
 				return max(self.up_queue)
 			elif self.direction == Direction.UP and not self.up_queue:
 				return min(self.down_queue)
+			elif self.direction == Direction.DOWN and self.down_queue:
+				return min(self.down_queue)
+			elif self.direction == Direction.DOWN and self.up_queue:
+				return max(self.up_queue)
 
 	"""STATE HANDLING"""
 
