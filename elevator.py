@@ -253,9 +253,9 @@ class Passenger(object):
 
 def main():
 	b = Building(0, 14, 1, 3)
-	for i in range(0, 10, 2):
+	for i in range(0, 14, 5):
 		b.elevator_bank[0].press_floor_button(i)
-	for i in range(4, 10, 2):
+	for i in range(4, 14, 3):
 		b.elevator_bank[1].press_floor_button(i)
 	b.elevator_bank[2].press_floor_button(0)
 	b.update_display()
