@@ -221,7 +221,10 @@ class Building(object):
 			p.check_location()
 
 	def update_display(self):
-		os.system('cls')
+		if os.name == 'nt':
+			os.system('cls')
+		elif os.name == 'posix':
+			os.system('clear')
 		w = 60
 		for e in self.elevator_bank:
 			print( "=" * w )
