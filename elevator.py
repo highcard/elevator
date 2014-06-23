@@ -33,16 +33,8 @@ class Elevator(object):
 		self.doors = Doors.CLOSED
 		self.up_queue = [] #initialize empty list of floor requests
 		self.down_queue = []
-		self.button_lights = []
-		self.passenger_list = []
 
 	"""Floor List Manipulations & Utility Functions"""
-
-	def reset_floor_queues(self):
-		"""resets the floor queues"""
-		self.up_queue = [] #initialize empty list of floor requests
-		self.down_queue = [] #initialize empty list of floor requests
-		self.button_lights = [] #initialize empty list of floor requests
 
 	def press_floor_button(self, floor):
 		"""adds a floor button request"""
@@ -65,14 +57,6 @@ class Elevator(object):
 
 	"""Elevator movements & state-changes"""
 
-	def move_up(self):
-		"""moves elevator in the down direction"""
-		self.cur_floor += 1
-		
-	def move_down(self):
-		"""moves elevator in the down direction"""
-		self.cur_floor -= 1
-
 	def switch_direction(self):
 		if self.direction == Direction.UP:
 			self.direction = Direction.DOWN
@@ -81,9 +65,9 @@ class Elevator(object):
 
 	def move(self):
 		if self.direction == Direction.UP:
-			self.move_up()
+			self.cur_floor += 1
 		elif self.direction == Direction.DOWN:
-			self.move_down()
+			self.cur_floor -= 1
 	
 	def open_door(self):
 		"""Opens door for passengers"""
