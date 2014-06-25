@@ -23,9 +23,8 @@ Doors =	enum(CLOSED="CLOSED", OPENED="OPEN")
 ################ 
 
 class Elevator(object):
-	def __init__(self, parent, id_num, cur_floor, default_floor):
+	def __init__(self, parent, cur_floor, default_floor):
 		#Initialize class attributes
-		self.id_num = id_num
 		self.cur_floor = cur_floor
 		self.default_floor = default_floor
 		self.state = State.IDLE
@@ -171,7 +170,7 @@ class Building(object):
 		self.min_floor = min_floor
 		self.max_floor = max_floor
 		self.lobby = lobby
-		self.elevator_bank = [Elevator(self, i, self.lobby, self.lobby) for i in range(0, num_elevators)]
+		self.elevator_bank = [Elevator(self, self.lobby, self.lobby) for i in range(0, num_elevators)]
 		self.floors = [Floor(i) for i in range(min_floor, max_floor + 1)]
 		self.frame = 0
 		self.passenger_count = 0
@@ -210,9 +209,9 @@ class Building(object):
 		elif os.name == 'posix':
 			os.system('clear')
 		w = 60
-		for e in self.elevator_bank:
+		for i, e in enumerate(self.elevator_bank):
 			print( "=" * w )
-			print( "Elevator: {}".format(str(e.id_num)))
+			print( "Elevator: {}".format(str(i)))
 			print( "=" * w )
 			print( "Floor:         {}".format(str(e.cur_floor)))
 			print( "Doors:         {}".format(str(e.doors)))
